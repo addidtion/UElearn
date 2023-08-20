@@ -3,6 +3,7 @@
 
 #include "STFCharacter.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
 // Sets default values
@@ -16,6 +17,13 @@ ASTFCharacter::ASTFCharacter()
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>("CameraComp");
 	CameraComp->SetupAttachment(SpringArmComp);
+
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	SpringArmComp->bUsePawnControlRotation = true;
+	CameraComp->bUsePawnControlRotation = false;
 }
 
 // Called when the game starts or when spawned
@@ -27,12 +35,20 @@ void ASTFCharacter::BeginPlay()
 
 void ASTFCharacter::MoveForward(float value)
 {
-	AddMovementInput(GetActorForwardVector(),value);
+	FRotator ControllerRot = GetControlRotation();
+	ControllerRot.Pitch = 0;
+	ControllerRot.Roll = 0;
+	AddMovementInput(ControllerRot.Vector(), value);
 }
 
 void ASTFCharacter::MoveRight(float value)
 {
-	AddMovementInput(GetActorRightVector(), value);
+	FRotator ControllerRot = GetControlRotation();
+	ControllerRot.Pitch = 0;
+	ControllerRot.Roll = 0;
+
+	FVector RightVec = FRotationMatrix(ControllerRot).GetScaledAxis(EAxis::Y);
+	AddMovementInput(RightVec, value);
 }
 
 // Called every frame
@@ -51,5 +67,6 @@ void ASTFCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAxis("MoveRight", this, &ASTFCharacter::MoveRight);
 
 	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 }
 
